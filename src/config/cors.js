@@ -1,3 +1,16 @@
 import cors from 'cors';
 import { env } from './env.js';
-export default cors({ origin: (o, cb) => (!o || env.origins.includes(o) ? cb(null, true) : cb(new Error('Origin not allowed'))), credentials: true });
+export function normalizeOrigin(value) {
+	try { return new URL(String(value).trim()).origin; }
+	catch { return ''; }
+}
+
+const allowedOrigins = new Set(env.origins.map(normalizeOrigin).filter(Boolean));
+
+export default cors({
+	origin: (origin, callback) => {
+		if (!origin || allowedOrigins.has(normalizeOrigin(origin))) return callback(null, true);
+		return callback(new Error(`Origin not allowed: ${origin}`));
+	},
+	credentials: true,
+});
