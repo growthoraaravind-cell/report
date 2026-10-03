@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import * as pub from '../controllers/public.controller.js';
+import * as sub from '../controllers/submission.controller.js';
+import * as aud from '../controllers/audit.controller.js';
+import * as up from '../controllers/upload.controller.js';
+import { validate } from '../middlewares/validate.js';
+import { submitLimiter, uploadLimiter } from '../middlewares/rateLimit.js';
+import { uploadFiles } from '../middlewares/upload.middleware.js';
+const r = Router();
+r.get('/lookups', pub.lookups); r.get('/site', pub.siteInfo); r.get('/stats', pub.publicStats);
+r.get('/schemes', pub.listSchemes); r.get('/schemes/:schemeId', pub.getScheme);
+r.post('/submissions', submitLimiter, validate(sub.submissionSchema), sub.createSubmission);
+r.get('/results/:token', sub.getResult);
+r.post('/audit/run', submitLimiter, validate(aud.auditSchema), aud.runAudit);
+r.post('/contact', submitLimiter, validate(pub.contactSchema), pub.createContact);
+r.post('/upload', uploadLimiter, ...uploadFiles(['document', 'image']), up.saveUploads);
+export default r;
